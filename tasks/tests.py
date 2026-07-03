@@ -1,6 +1,6 @@
 import pytest
 from tasks.models import Task
-
+from rest_framework.test import APIClient
 
 @pytest.mark.django_db
 def test_task_creation_with_owner(django_user_model):
@@ -40,3 +40,28 @@ def test_owner_reverse_relation(django_user_model):
     Task.objects.create(title="Task two", owner=user)
 
     assert user.tasks.count() == 2
+
+
+@pytest.mark.django_db
+class TestTaskAPI:
+
+    def test_unauthenticated_user_cannot_list_tasks(self):
+        client = APIClient()
+        response = client.get('/api/tasks/')
+        assert response.status_code == 401
+
+
+
+    def test_user_cannot_see_other_users_tasks(self, django_user_model):
+        user1 = django_user_model.objects.create_user(username="user1", password="testpass123")
+        user2 = django_user_model.objects.create_user(username="user2", password="testpass123")
+
+        Task.objects.create(title="User1's task", owner=user1)
+
+        client = APIClient()
+        client.force_authenticate(user=user2)
+
+        response = client.get('/api/tasks/')
+
+        assert response.status_code == 200
+        assert len(response.data) == 0
