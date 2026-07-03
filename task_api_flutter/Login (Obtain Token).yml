@@ -6,7 +6,22 @@ info:
 http:
   method: POST
   url: http://127.0.0.1:8000/api/token/
-  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Test task 2",
+        "description": "Testing POST endpoint",
+        "owner": 999
+      }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("access_token", res.body.access);
 
 settings:
   encodeUrl: true
